@@ -8,6 +8,16 @@ version = "0.0.1.dev0"
 description = "Triplet-based Soft Ordinal Embedding"
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.23.5",
+    "torch>=2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
