@@ -5,7 +5,6 @@ from __future__ import annotations
 from time import perf_counter
 from typing import Any, Literal
 
-import numpy as np
 import torch
 
 from .checkpoints import BestCheckpoint, map_completed_thresholds
@@ -13,7 +12,12 @@ from .evaluation import OrdinalMode, evaluate_embedding
 from .initialization import initialize_embeddings
 from .losses import _triplet_hinge_values
 from .results import CheckpointMapping, EvaluationRecord, StepRecord, TrainResult
-from .validation import prepare_triplets, resolve_device, validate_loss_options
+from .validation import (
+    prepare_triplets,
+    resolve_device,
+    validate_loss_options,
+    validate_training_options,
+)
 
 
 OptimizerName = Literal["sgd", "adam"]
@@ -22,47 +26,6 @@ OptimizerName = Literal["sgd", "adam"]
 def _synchronize(device: torch.device) -> None:
     if device.type == "cuda":
         torch.cuda.synchronize(device)
-
-
-def _validate_training_options(
-    *,
-    optimizer: str,
-    batch_size: int,
-    learning_rate: float,
-    epochs: int,
-    evaluation_interval: int,
-    evaluation_interval_triplets: int | None,
-    shuffle_seed: int | None,
-    adam_betas: tuple[float, float],
-    adam_eps: float,
-) -> None:
-    if optimizer not in {"sgd", "adam"}:
-        raise ValueError("optimizer must be 'sgd' or 'adam'")
-    if not isinstance(batch_size, int) or batch_size < 1:
-        raise ValueError("batch_size must be a positive integer")
-    if not np.isfinite(learning_rate) or learning_rate <= 0:
-        raise ValueError("learning_rate must be finite and positive")
-    if not isinstance(epochs, int) or epochs < 1:
-        raise ValueError("epochs must be a positive integer")
-    if not isinstance(evaluation_interval, int) or evaluation_interval < 1:
-        raise ValueError("evaluation_interval must be a positive integer")
-    if evaluation_interval_triplets is not None and (
-        not isinstance(evaluation_interval_triplets, int)
-        or evaluation_interval_triplets < 1
-    ):
-        raise ValueError("evaluation_interval_triplets must be a positive integer or None")
-    if shuffle_seed is not None and (
-        not isinstance(shuffle_seed, int) or shuffle_seed < 0
-    ):
-        raise ValueError("shuffle_seed must be a non-negative integer or None")
-    if (
-        not isinstance(adam_betas, tuple)
-        or len(adam_betas) != 2
-        or any(not np.isfinite(value) or value < 0 or value >= 1 for value in adam_betas)
-    ):
-        raise ValueError("adam_betas must contain two finite values in [0, 1)")
-    if not np.isfinite(adam_eps) or adam_eps <= 0:
-        raise ValueError("adam_eps must be finite and positive")
 
 
 def train_soe(
@@ -107,9 +70,10 @@ def train_soe(
     """
 
     validate_loss_options(margin, reduction)
-    _validate_training_options(
+    if not isinstance(batch_size, int) or batch_size < 1:
+        raise ValueError("batch_size must be a positive integer")
+    validate_training_options(
         optimizer=optimizer,
-        batch_size=batch_size,
         learning_rate=learning_rate,
         epochs=epochs,
         evaluation_interval=evaluation_interval,

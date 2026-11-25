@@ -1,5 +1,6 @@
 """Triplet-based Soft Ordinal Embedding."""
 
+from .estimator import SOE
 from .evaluation import EvaluationMetrics, evaluate_embedding, ordinal_error
 from .losses import triplet_hinge_loss
 from .results import CheckpointMapping, EvaluationRecord, StepRecord, TrainResult
@@ -9,6 +10,7 @@ __all__ = [
     "CheckpointMapping",
     "EvaluationMetrics",
     "EvaluationRecord",
+    "SOE",
     "StepRecord",
     "TrainResult",
     "evaluate_embedding",
